@@ -24,7 +24,7 @@ def ssr_loop(n_ssr, setpoint, readback, ssr_state, pidctrl_state):
             readback[idx] = setpoint[idx]
         now = float(time.time())
 
-        next_ev = 1.0e9
+        next_ev = ssr_cycle_time/5.0 # don't sleep for longer than this
 
         for ssr in range(n_ssr):
             if not pidctrl_state[ssr]:

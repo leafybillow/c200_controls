@@ -166,7 +166,7 @@ class c200_controls:
         for i in range(self.n_tc):
             tc_chan_box = gtk.HBox(homogeneous=False, spacing=2)
 
-            label= gtk.Label("TC %2d" %i)
+            label= gtk.Label("TC %2d" % (i+1))
             tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
             label.show()
 
@@ -273,7 +273,7 @@ class c200_controls:
 
             combobox = gtk.combo_box_new_text()
             for tc  in range(self.n_tc):
-                combobox.append_text("TC %2d" % tc)
+                combobox.append_text("TC %2d" % (tc+1))
             self.ssr_tc_select_menu.append(combobox)
             combobox.connect("changed", self.set_pid_tc, i)
             ssr_pid_ctrlbox.pack_start(combobox, expand=True, fill=True, padding=0)

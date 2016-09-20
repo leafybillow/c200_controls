@@ -9,9 +9,9 @@ import matplotlib.dates as mdates
 from multiprocessing import Process, Pipe, Array
 
 
-avg_time = 60.0# 1 minute moving average
+avg_time = 30.0# 1 minute moving average
 pid_cycle_time = 0.001 # ms pid cycle
-tc_tolerance = 5.0 # degC
+tc_tolerance = 2.0 # degC
 
 debug = False
 
@@ -39,7 +39,7 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
 
         print "Opening ", port, " for SSR control"
 
-        ssr_port = serial.Serial(port[0], 300, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1)
+        ssr_port = serial.Serial(port[0], 9600, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1)
 
         ssr_port.close()
         ssr_port.open()
@@ -57,11 +57,21 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
 
             # Under control of PID
             if pidctrl_state[ssr]:
+
+                if tc_data[assigned_tc[ssr]]  >  T_setp[ssr] - tc_tolerance/2: 
+                    if tc_rate[assigned_tc[ssr]] > 0.0:
+                            set_ssr(ssr_port, ssr, False)
+
+                if tc_data[assigned_tc[ssr]]  <  T_setp[ssr] + tc_tolerance/2: 
+                    if tc_rate[assigned_tc[ssr]] < 0.0:
+                            set_ssr(ssr_port, ssr, False)
+
                 if tc_data[assigned_tc[ssr]]  >  T_setp[ssr] + tc_tolerance: 
-                    print "temp is high",  tc_data[assigned_tc[ssr]], T_setp[ssr]
+#                    print "temp is high",  tc_data[assigned_tc[ssr]], T_setp[ssr]
                     # Think about turning off
                     if T_ramp_state[ssr]:
-                        if tc_rate[assigned_tc[ssr]] < T_ramp[ssr]:
+                        # implement cooldown rate limits
+                        if tc_rate[assigned_tc[ssr]] < T_ramp[ssr] and T_ramp[ssr] < 0.0:
                             ssr_state[ssr] = True
                             # Turn on SSR
                             set_ssr(ssr_port, ssr, True)
@@ -75,10 +85,12 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
                         set_ssr(ssr_port, ssr, False)
 
                 if tc_data[assigned_tc[ssr]]  <  T_setp[ssr] - tc_tolerance: 
-                    print "temp is low",  tc_data[assigned_tc[ssr]], T_setp[ssr]
+#                    print "temp is low",  tc_data[assigned_tc[ssr]], T_setp[ssr]
                     # Think about turning on
                     if T_ramp_state[ssr]:
-                        if tc_rate[assigned_tc[ssr]] > T_ramp[ssr]:
+#                        print "ramp limit enabled to ", T_ramp[ssr]
+                        if tc_rate[assigned_tc[ssr]] > T_ramp[ssr] and T_ramp[ssr] > 0.0:
+#                            print "But ramping too fast!"
                             ssr_state[ssr] = False
                             set_ssr(ssr_port, ssr, False)
                             # Turn off SSR

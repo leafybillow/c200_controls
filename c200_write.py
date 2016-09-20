@@ -29,7 +29,7 @@ def write(n_tc, n_ssr, ssr_avg_power, tc_data):
         outfile.write("\t")
 
         for ssr in range(n_ssr):
-            outfile.write("%4.1f" % ssr_avg_power[ssr] )
+            outfile.write("%4.3f" % ssr_avg_power[ssr] )
             outfile.write("\t")
 
 

@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 import matplotlib.dates as mdates
 
-n_for_ramp = 3
+n_for_ramp = 20
 
 debug = False
 
-update_cycle = 0.5 # Don't update more frequently than this
+update_cycle = 0.2 # Don't update more frequently than this
 
 def calc_rate(times, points):
     n = len(times)
@@ -53,7 +53,7 @@ def tc_loop(n_tc, tc_data, tc_rate):
     print "Opening ", port, " for TC"
 
     if not debug:
-        tc_port = serial.Serial(port[0], 300, timeout= 5.0, parity=serial.PARITY_EVEN, xonxoff=0, rtscts=0, dsrdtr=0, bytesize=7, stopbits=1)
+        tc_port = serial.Serial(port[0], 9600, timeout= 5.0, parity=serial.PARITY_EVEN, xonxoff=0, rtscts=0, dsrdtr=0, bytesize=7, stopbits=1)
 
         tc_port.close()
         tc_port.open()
