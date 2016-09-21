@@ -35,8 +35,7 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
 
         for port in ports:
             print port
-        port = ports[2]
-
+        port = ports[1]
         print "Opening ", port, " for SSR control"
 
         ssr_port = serial.Serial(port[0], 9600, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1)

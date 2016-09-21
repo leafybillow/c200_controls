@@ -43,6 +43,7 @@ def tc_loop(n_tc, tc_data, tc_rate):
     for port in ports:
         print port
     port = ports[0]
+    print "Using ", port[0], " for TC readout"
 
     addresses = [b'A', b'E', b'I', b'M']
 
