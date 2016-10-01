@@ -8,9 +8,12 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 import matplotlib.dates as mdates
 
-n_for_ramp = 20
+#10 seconds of data
+time_for_minrate= 10
+#30 minutes of data
+time_for_hourrate= 30*60
 
-debug = False
+debug = True
 
 update_cycle = 0.2 # Don't update more frequently than this
 
@@ -29,12 +32,17 @@ def calc_rate(times, points):
         m_num_sum += (times[i]-xavg)*(points[i]-yavg)
         m_den_sum += (times[i]-xavg)*(times[i]-xavg)
 
+    if abs(m_den_sum) < 0.1:
+        return 0.0
+
     return m_num_sum/m_den_sum
 
-def tc_loop(n_tc, tc_data, tc_rate):
+def tc_loop(n_tc, tc_data, tc_rate_min, tc_rate_hour):
 
-    last_n = [[] for i in range(n_tc)]
-    time_n = []
+    last_n_min = [[] for i in range(n_tc)]
+    last_n_hour= [[] for i in range(n_tc)]
+    time_n_min = []
+    time_n_hour = []
 
     tc_port = None
 
@@ -89,17 +97,25 @@ def tc_loop(n_tc, tc_data, tc_rate):
 
 
         if len(data) == n_tc:
-            time_n.append(time.time())
-            if len(time_n) > n_for_ramp:
-                time_n.pop(0)
+            time_n_min.append(time.time())
+            time_n_hour.append(time.time())
+
+            while time_n_min[-1] - time_n_min[0] > time_for_minrate:
+                time_n_min.pop(0)
+
+            while time_n_hour[-1] - time_n_hour[0] > time_for_hourrate:
+                time_n_hour.pop(0)
 
             for i in range(n_tc):
                 tc_data[i] = data[i] 
-                last_n[i].append(data[i])
-                if len(last_n[i]) > n_for_ramp:
-                    last_n[i].pop(0)
+                last_n_min[i].append(data[i])
+                last_n_hour[i].append(data[i])
 
-                tc_rate[i] = calc_rate(time_n, last_n[i])
+                last_n_min[i]  = last_n_min[i][-len(time_n_min):]
+                last_n_hour[i] = last_n_hour[i][-len(time_n_hour):]
+
+                tc_rate_min[i]  = calc_rate(time_n_min, last_n_min[i])
+                tc_rate_hour[i] = calc_rate(time_n_hour, last_n_hour[i])
 
         else:
             print "Malformed TC data"

@@ -1,4 +1,4 @@
-import serial, time, io, datetime, math
+import serial, time, io, datetime, math, os
 from serial.tools.list_ports import comports
 
 import numpy as np
@@ -11,9 +11,11 @@ from multiprocessing import Process, Pipe, Array
 
 avg_time = 30.0# 1 minute moving average
 pid_cycle_time = 0.001 # ms pid cycle
-tc_tolerance = 2.0 # degC
 
-debug = False
+debug = True
+
+hard_temp_limit = 240.0
+hard_rate_limit = 5.0/60.0 # 5 deg/min
 
 def set_ssr( port, chan, val ):
     if not debug:
@@ -23,7 +25,7 @@ def set_ssr( port, chan, val ):
             port.rts = val
 
 
-def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_state, pidctrl_state, ssr_avg_power):
+def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate_min, tc_rate_hour, ssr_off, ssr_state, ssr_rb, pidctrl_state, ssr_avg_power):
 
     n_to_average = avg_time/pid_cycle_time
 
@@ -46,8 +48,20 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
         ssr_port.dtr = False
         ssr_port.rts = False
 
+    all_off = False
     while 1:
+        for tcval in tc_data:
+            if tcval > hard_temp_limit and not all_off:
+                # Hit emergency limit
+                all_off = True
+                # Push to slack
+                os.system("curl -X POST -H \'Content-type: application/json\' --data \'{\"channel\": \"#c200\", \"text\":\"C200 shutting down!  Temperature saftey threshold met\"}\' https://hooks.slack.com/services/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")
+
+
         for ssr in range(len(ssr_state)):
+            if all_off:
+                ssr_off[ssr] = True
+
             power_sum[ssr].append(ssr_state[ssr])
             if len(power_sum[ssr]) > n_to_average:
                 power_sum[ssr].pop(0)
@@ -56,57 +70,52 @@ def pid_loop(T_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate, ssr_st
 
             # Under control of PID
             if pidctrl_state[ssr]:
+                calc_setpoint = 0.0
 
-                if tc_data[assigned_tc[ssr]]  >  T_setp[ssr] - tc_tolerance/2: 
-                    if tc_rate[assigned_tc[ssr]] > 0.0:
-                            set_ssr(ssr_port, ssr, False)
+                diff = tc_data[assigned_tc[ssr]] -  T_setp[ssr];
 
-                if tc_data[assigned_tc[ssr]]  <  T_setp[ssr] + tc_tolerance/2: 
-                    if tc_rate[assigned_tc[ssr]] < 0.0:
-                            set_ssr(ssr_port, ssr, False)
+                # Temp is low
+                if diff < 0:
+                    calc_setpoint = -prop_setp[ssr]*diff
 
-                if tc_data[assigned_tc[ssr]]  >  T_setp[ssr] + tc_tolerance: 
-#                    print "temp is high",  tc_data[assigned_tc[ssr]], T_setp[ssr]
-                    # Think about turning off
-                    if T_ramp_state[ssr]:
-                        # implement cooldown rate limits
-                        if tc_rate[assigned_tc[ssr]] < T_ramp[ssr] and T_ramp[ssr] < 0.0:
-                            ssr_state[ssr] = True
-                            # Turn on SSR
-                            set_ssr(ssr_port, ssr, True)
-                        else:
-                            ssr_state[ssr] = False
-                            # Turn off SSR
-                            set_ssr(ssr_port, ssr, False)
+                # Ramp rate is too high
+                if T_ramp_state[ssr]:
+                    ramp_x = 0.0
+                    if abs(T_ramp[ssr]) > 1e-2:
+                        ramp_x = 1.0 - (T_ramp[ssr] - tc_rate_min[assigned_tc[ssr]])/T_ramp[ssr]
                     else:
-                        ssr_state[ssr] = False
-                        # Turn off SSR
-                        set_ssr(ssr_port, ssr, False)
+                        ramp_x = 0.0
 
-                if tc_data[assigned_tc[ssr]]  <  T_setp[ssr] - tc_tolerance: 
-#                    print "temp is low",  tc_data[assigned_tc[ssr]], T_setp[ssr]
-                    # Think about turning on
-                    if T_ramp_state[ssr]:
-#                        print "ramp limit enabled to ", T_ramp[ssr]
-                        if tc_rate[assigned_tc[ssr]] > T_ramp[ssr] and T_ramp[ssr] > 0.0:
-#                            print "But ramping too fast!"
-                            ssr_state[ssr] = False
-                            set_ssr(ssr_port, ssr, False)
-                            # Turn off SSR
+                    if T_ramp[ssr] > 0.0:
+                        if ramp_x > 1.0:
+                            calc_setpoint = 0.0
                         else:
-                            ssr_state[ssr] = True 
-                            set_ssr(ssr_port, ssr, True)
-                            # Turn on SSR
-                    else:
-                        ssr_state[ssr] = True 
-                        set_ssr(ssr_port, ssr, True)
-                        # Turn on SSR
-            # Not controled by PID, ssr state should be set *by* ssr_state
-            else:
-                if ssr_state[ssr]:
-                    set_ssr(ssr_port, ssr, True)
+                            if ramp_x > 0.75:
+                                calc_setpoint *= (ramp_x-0.75)/0.25
+
+                    if T_ramp[ssr] < 0.0:
+                        if ramp_x > 1.0:
+                            calc_setpoint = 1.0
+                        else:
+                            if ramp_x > 0.75:
+                                calc_setpoint *= (ramp_x-0.75)/0.25
+
+
+                ramp_hard_x  = 1.0 - (hard_rate_limit- tc_rate_min[assigned_tc[ssr]])/hard_rate_limit
+                if ramp_hard_x > 1.0:
+                    calc_setpoint = 0.0
                 else:
-                    set_ssr(ssr_port, ssr, False)
+                    if ramp_hard_x > 0.75:
+                        calc_setpoint *= (ramp_hard_x-0.75)/0.25
+
+
+                ssr_rb[ssr] = calc_setpoint
+
+
+            if ssr_state[ssr] and not ssr_off[ssr]:
+                set_ssr(ssr_port, ssr, True)
+            else:
+                set_ssr(ssr_port, ssr, False)
 
         time.sleep(pid_cycle_time)
 

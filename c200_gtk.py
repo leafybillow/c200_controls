@@ -25,7 +25,8 @@ class c200_controls:
     tc_graph_process = None
 
     tc_data_labels = []
-    tc_rate_labels = []
+    tc_rate_min_labels = []
+    tc_rate_hour_labels = []
 
     ssr_power_labels = []
     ssr_max_power_box = []
@@ -49,8 +50,11 @@ class c200_controls:
         for idx, tc in enumerate(self.tc_data_labels):
             tc.set_text( "%3.1f" % self.tc_data[idx] )
 
-        for idx, tc in enumerate(self.tc_rate_labels):
-            tc.set_text( "%+3.1f"% (self.tc_rate[idx]*60.0) )
+        for idx, tc in enumerate(self.tc_rate_min_labels):
+            tc.set_text( "%+3.1f"% (self.tc_rate_min[idx]*60.0) )
+
+        for idx, tc in enumerate(self.tc_rate_hour_labels):
+            tc.set_text( "%+3.1f"% (self.tc_rate_hour[idx]*3600.0) )
 
         for idx, ssr in enumerate(self.ssr_power_labels):
             max_p_val = 100.0
@@ -151,18 +155,23 @@ class c200_controls:
         tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
         label.show()
 
-        label= gtk.Label("Temp")
+        label= gtk.Label("Temp\n[degC]")
         tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
         label.show()
 
-        label= gtk.Label("Rate")
+        label= gtk.Label("Rate\n[K/min]")
         tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
         label.show()
+        label= gtk.Label("Rate\n[K/hr]")
+        tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
+        label.show()
+
         tc_box.pack_start(tc_head_box, expand=True, fill=True, padding=0)
         tc_head_box.show()
 
         self.tc_data_labels = []
-        self.tc_rate_labels = []
+        self.tc_rate_min_labels = []
+        self.tc_rate_hour_labels = []
         for i in range(self.n_tc):
             tc_chan_box = gtk.HBox(homogeneous=False, spacing=2)
 
@@ -175,10 +184,15 @@ class c200_controls:
             label.show()
             self.tc_data_labels.append(label)
 
-            label= gtk.Label("rate")
+            label= gtk.Label("rate [degC/min]")
             tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
             label.show()
-            self.tc_rate_labels.append(label)
+            self.tc_rate_min_labels.append(label)
+
+            label= gtk.Label("rate [degC/hour]")
+            tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+            self.tc_rate_hour_labels.append(label)
 
             tc_box.pack_start(tc_chan_box, expand=True, fill=True, padding=0)
             tc_chan_box.show()

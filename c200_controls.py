@@ -25,15 +25,19 @@ if __name__ == '__main__':
     n_ssr = 2
     n_tc = 16
 
+    ssr_off  = Array('i', [0  for i in range(n_ssr)] )
 
     ssr_setp  = Array('f', [0.0  for i in range(n_ssr)] )
-    ssr_rb    = Array('f', [0.0  for i in range(n_ssr) ] )
+    ssr_rb  = Array('f', [0.0  for i in range(n_ssr)] )
 
     pidctrl_state = Array('b', [False for i in range(n_ssr)])
     ssr_T_setp   = Array('f', [20.0 for i in range(n_ssr)] )
 
-    ssr_T_ramp_state   = Array('b', [False for i in range(n_ssr)] )
-    ssr_T_ramp   = Array('f', [0.0 for i in range(n_ssr)] )
+    ssr_prop_setp  = Array('f', [1.0 for i in range(n_ssr)] )
+
+    ssr_T_ramp_state    = Array('i', [0 for i in range(n_ssr)] )
+
+    ssr_T_ramp    = Array('f', [0.0 for i in range(n_ssr)] )
 
     ssr_tc_setp  = Array('i', [-1 for i in range(n_ssr)] )
 
@@ -42,13 +46,14 @@ if __name__ == '__main__':
     ssr_avg_power = Array('f', [0.0 for i in range(n_ssr)])
 
     tc_data = Array('f', [20.0 for i in range(n_tc)])
-    tc_rate = Array('f', [0.0 for i in range(n_tc)])
+    tc_rate_min  = Array('f', [0.0 for i in range(n_tc)])
+    tc_rate_hour = Array('f', [0.0 for i in range(n_tc)])
 
-    p_ssr = Process(target = c200_ssr.ssr_loop, args=(n_ssr, ssr_setp,ssr_rb,ssr_state,pidctrl_state))
+    p_ssr = Process(target = c200_ssr.ssr_loop, args=(n_ssr, ssr_off, ssr_setp,ssr_rb,ssr_state,pidctrl_state))
 
-    p_pid = Process(target = c200_pid.pid_loop, args=(ssr_T_setp, ssr_tc_setp, ssr_T_ramp_state, ssr_T_ramp, tc_data, tc_rate, ssr_state, pidctrl_state, ssr_avg_power))
+    p_pid = Process(target = c200_pid.pid_loop, args=(ssr_T_setp, ssr_prop_setp, ssr_tc_setp, ssr_T_ramp_state, ssr_T_ramp, tc_data, tc_rate_min, tc_rate_hour, ssr_off, ssr_state, ssr_rb, pidctrl_state, ssr_avg_power))
 
-    p_tc  = Process(target = c200_tc.tc_loop, args=(n_tc, tc_data, tc_rate))
+    p_tc  = Process(target = c200_tc.tc_loop, args=(n_tc, tc_data, tc_rate_min, tc_rate_hour))
     p_tc_graph  = Process(target = c200_tc_graph.plot_loop, args=(n_tc, tc_data))
 
     p_write = Process(target = c200_write.write, args=(n_tc, n_ssr, ssr_avg_power, tc_data))
@@ -83,7 +88,8 @@ if __name__ == '__main__':
     controls.ssr_state = ssr_state
     controls.ssr_avg_power = ssr_avg_power
     controls.tc_data = tc_data
-    controls.tc_rate = tc_rate
+    controls.tc_rate_min = tc_rate_min
+    controls.tc_rate_hour = tc_rate_hour
 
     controls.main()
 

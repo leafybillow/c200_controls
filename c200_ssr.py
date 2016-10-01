@@ -12,7 +12,7 @@ from multiprocessing import Process, Pipe, Array
 ssr_cycle_time = 5.0; # time in s for SSR cycle
 granularity = 100;
 
-def ssr_loop(n_ssr, setpoint, readback, ssr_state, pidctrl_state):
+def ssr_loop(n_ssr, ssr_off, setpoint, readback, ssr_state, pidctrl_state):
     tick = ssr_cycle_time/granularity
 
     # Space out cycles
@@ -21,13 +21,18 @@ def ssr_loop(n_ssr, setpoint, readback, ssr_state, pidctrl_state):
 
     while 1:
         for idx,p in enumerate(setpoint):
-            readback[idx] = setpoint[idx]
+            # PID directly sets readback
+            if not pidctrl_state[idx]:
+                readback[idx] = p
         now = float(time.time())
 
         next_ev = ssr_cycle_time/5.0 # don't sleep for longer than this
 
+
         for ssr in range(n_ssr):
-            if not pidctrl_state[ssr]:
+            if ssr_off[ssr]:
+                ssr_state[ssr] = False
+            else:
                 t_in_cycle = math.fmod(now - start_tick[ssr], ssr_cycle_time)
 
                 if 0.0 <= t_in_cycle/ssr_cycle_time and t_in_cycle/ssr_cycle_time < readback[ssr]/100.0:
@@ -39,7 +44,6 @@ def ssr_loop(n_ssr, setpoint, readback, ssr_state, pidctrl_state):
 
                 if t_in_cycle/ssr_cycle_time < 0.0 and abs(t_in_cycle) < next_ev:
                     next_ev = abs(t_in_cycle)
-                
 
                 if ssr_state[ssr]:
                     t_left = ssr_cycle_time*readback[ssr]/100.0 - t_in_cycle
@@ -49,5 +53,6 @@ def ssr_loop(n_ssr, setpoint, readback, ssr_state, pidctrl_state):
                     t_left = ssr_cycle_time - t_in_cycle
                     if t_left < next_ev and t_left > 0.0:
                         next_ev = t_left
+
         time.sleep(next_ev)
 
