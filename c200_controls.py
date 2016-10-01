@@ -49,12 +49,15 @@ if __name__ == '__main__':
     tc_rate_min  = Array('f', [0.0 for i in range(n_tc)])
     tc_rate_hour = Array('f', [0.0 for i in range(n_tc)])
 
+    ssr_data = Array('f', [0.0 for i in range(n_tc)])
+    ssr_power_data = Array('f', [0.0 for i in range(n_tc)])
+
     p_ssr = Process(target = c200_ssr.ssr_loop, args=(n_ssr, ssr_off, ssr_setp,ssr_rb,ssr_state,pidctrl_state))
 
     p_pid = Process(target = c200_pid.pid_loop, args=(ssr_T_setp, ssr_prop_setp, ssr_tc_setp, ssr_T_ramp_state, ssr_T_ramp, tc_data, tc_rate_min, tc_rate_hour, ssr_off, ssr_state, ssr_rb, pidctrl_state, ssr_avg_power))
 
     p_tc  = Process(target = c200_tc.tc_loop, args=(n_tc, tc_data, tc_rate_min, tc_rate_hour))
-    p_tc_graph  = Process(target = c200_tc_graph.plot_loop, args=(n_tc, tc_data))
+    p_tc_graph  = Process(target = c200_tc_graph.plot_loop, args=(n_tc, tc_data, n_ssr, ssr_state, ssr_avg_power))
 
     p_write = Process(target = c200_write.write, args=(n_tc, n_ssr, ssr_avg_power, tc_data))
 

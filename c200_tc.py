@@ -13,7 +13,7 @@ time_for_minrate= 10
 #30 minutes of data
 time_for_hourrate= 30*60
 
-debug = True
+debug = False
 
 update_cycle = 0.2 # Don't update more frequently than this
 

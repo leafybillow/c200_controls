@@ -14,7 +14,7 @@ slack_url = ""
 avg_time = 30.0# 1 minute moving average
 pid_cycle_time = 0.001 # ms pid cycle
 
-debug = True
+debug = False
 
 hard_temp_limit = 240.0
 hard_rate_limit = 5.0/60.0 # 5 deg/min
@@ -120,8 +120,13 @@ def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_r
                     if ramp_hard_x > 0.75:
                         calc_setpoint *= (ramp_hard_x-0.75)/0.25
 
+                if calc_setpoint < 0.0:
+                    calc_setpoint = 0.0
 
-                ssr_rb[ssr] = calc_setpoint
+                if calc_setpoint > 1.0:
+                    calc_setpoint = 1.0
+
+                ssr_rb[ssr] = calc_setpoint*100.0
 
 
             if ssr_state[ssr] and not ssr_off[ssr]:

@@ -63,10 +63,10 @@ class c200_controls:
             tc.set_text( "%3.1f" % self.tc_data[idx] )
 
         for idx, tc in enumerate(self.tc_rate_min_labels):
-            tc.set_text( "%+3.1f"% (self.tc_rate_min[idx]*60.0) )
+            tc.set_text( "%+6.1f"% (self.tc_rate_min[idx]*60.0) )
 
         for idx, tc in enumerate(self.tc_rate_hour_labels):
-            tc.set_text( "%+3.1f"% (self.tc_rate_hour[idx]*3600.0) )
+            tc.set_text( "%+6.1f"% (self.tc_rate_hour[idx]*3600.0) )
 
         for idx, ssr in enumerate(self.ssr_power_labels):
             max_p_val = 400.0
@@ -203,57 +203,65 @@ class c200_controls:
 
 
         tc_box  = gtk.VBox(homogeneous=False, spacing=0)
-        tc_head_box = gtk.HBox(homogeneous=False, spacing=2)
+        tc_head_box = gtk.HBox(homogeneous=True, spacing=1)
         label= gtk.Label("Chan")
-        tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
+        label.set_alignment(xalign=0.0, yalign=0.5)
+        tc_head_box.pack_start(label, expand=False, fill=False, padding=5)
         label.show()
 
         label= gtk.Label("Temp\n[degC]")
-        tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
+        label.set_alignment(xalign=0.5, yalign=0.5)
+        tc_head_box.pack_start(label, expand=False, fill=False, padding=5)
         label.show()
 
         label= gtk.Label("Rate\n[K/min]")
-        tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
+        label.set_alignment(xalign=0.5, yalign=0.5)
+        tc_head_box.pack_start(label, expand=False, fill=False, padding=5)
         label.show()
         label= gtk.Label("Rate\n[K/hr]")
-        tc_head_box.pack_start(label, expand=True, fill=True, padding=0)
+        label.set_alignment(xalign=0.5, yalign=0.5)
+        tc_head_box.pack_start(label, expand=False, fill=False, padding=5)
         label.show()
 
-        tc_box.pack_start(tc_head_box, expand=True, fill=True, padding=0)
+        tc_box.pack_start(tc_head_box, expand=False, fill=False, padding=10)
         tc_head_box.show()
 
         self.tc_data_labels = []
         self.tc_rate_min_labels = []
         self.tc_rate_hour_labels = []
         for i in range(self.n_tc):
-            tc_chan_box = gtk.HBox(homogeneous=False, spacing=2)
+            tc_chan_box = gtk.HBox(homogeneous=True, spacing=1)
 
             label= gtk.Label("TC %2d" % (i+1))
-            tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
+            label.set_alignment(xalign=0.0, yalign=0.5)
+            tc_chan_box.pack_start(label, expand=False, fill=False, padding=5)
             label.show()
 
             label= gtk.Label("temp")
-            tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
+            label.set_alignment(xalign=1.0, yalign=0.5)
+            tc_chan_box.pack_start(label, expand=False, fill=False, padding=5)
             label.show()
             self.tc_data_labels.append(label)
 
-            label= gtk.Label("rate [degC/min]")
-            tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
+            label= gtk.Label("rate [/min]")
+            label.set_alignment(xalign=0.0, yalign=0.5)
+            tc_chan_box.pack_start(label, expand=False, fill=False, padding=5)
             label.show()
             self.tc_rate_min_labels.append(label)
 
-            label= gtk.Label("rate [degC/hour]")
-            tc_chan_box.pack_start(label, expand=True, fill=True, padding=0)
+            label= gtk.Label("rate [/hour]")
+            label.set_alignment(xalign=0.0, yalign=0.5)
+            tc_chan_box.pack_start(label, expand=False, fill=False, padding=5)
             label.show()
             self.tc_rate_hour_labels.append(label)
 
-            tc_box.pack_start(tc_chan_box, expand=True, fill=True, padding=0)
+            tc_box.pack_start(tc_chan_box, expand=True, fill=False, padding=0)
             tc_chan_box.show()
 
-        main_box.pack_start(tc_box, expand=True, fill=True, padding=0)
+        main_box.pack_start(tc_box, expand=False, fill=True, padding=20)
         tc_box.show()
             
-        ssr_box  = gtk.VBox(homogeneous=False, spacing=0)
+        ssr_box  = gtk.VBox(homogeneous=True, spacing=0)
 
         for i in range(self.n_ssr):
             ssr_single_ssr_box = gtk.HBox(homogeneous=False, spacing=0)
@@ -302,7 +310,8 @@ class c200_controls:
 
             pid_rad = gtk.RadioButton(group=man_rad, label="PID")
             pid_rad.connect("toggled", self.man_pid_select, i, True)
-            ssr_radiobox.pack_start(pid_rad, expand=True, fill=True, padding=0)
+            #ssr_radiobox.pack_start(pid_rad, expand=True, fill=True, padding=0)
+            ssr_radiobox.pack_start(pid_rad, expand=True, fill=True, padding=20)
             pid_rad.show()
 
             if self.pidctrl_state[i]:
@@ -345,41 +354,41 @@ class c200_controls:
                 combobox.append_text("TC %2d" % (tc+1))
             self.ssr_tc_select_menu.append(combobox)
             combobox.connect("changed", self.set_pid_tc, i)
-            ssr_pid_ctrlbox.pack_start(combobox, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(combobox, expand=True, fill=False, padding=0)
             combobox.show()
 
             label = gtk.Label("Set Temp:")
-            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
 
             entry = gtk.Entry(max=0)
-            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=False, padding=0)
             self.ssr_tc_setpoint_box.append(entry)
             entry.connect("activate", self.set_pid_setpoint, i)
             entry.show()
 
             label = gtk.Label("degC")
-            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
             label = gtk.Label("prop dT:")
-            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
             entry = gtk.Entry(max=0)
-            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=False, padding=0)
             self.ssr_tc_setpoint_box.append(entry)
             entry.connect("activate", self.set_prop_setpoint, i)
             entry.show()
 
             label = gtk.Label("%/degC")
-            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
 
             check = gtk.CheckButton(label="Rate Limit")
-            ssr_pid_ctrlbox.pack_start(check, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(check, expand=True, fill=False, padding=0)
             self.ssr_tc_rate_check.append(check)
             check.connect("toggled", self.set_rate_limit, i)
             if self.ssr_T_ramp_state[i]:
@@ -387,17 +396,17 @@ class c200_controls:
             check.show()
 
             entry = gtk.Entry(max=0)
-            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=False, padding=0)
             self.ssr_rate_setpoint_box.append(entry)
             entry.connect("activate", self.set_rate_setpoint, i)
             entry.show()
 
 
             label = gtk.Label("degC/min")
-            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
-            ssr_input_ctrlbox.pack_start(ssr_pid_ctrlbox, expand=True, fill=True, padding=0)
+            ssr_input_ctrlbox.pack_start(ssr_pid_ctrlbox, expand=True, fill=False, padding=0)
             ssr_pid_ctrlbox.show()
 
             ############## Third line - PID readback
@@ -405,34 +414,35 @@ class c200_controls:
 
             label = gtk.Label("TC -1")
             self.ssr_tc_assigned_label.append(label)
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
             label = gtk.Label("Set Temp:")
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
             label = gtk.Label("0.0")
             self.ssr_tc_readback_label.append(label)
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=30)
             label.show()
 
             label = gtk.Label("degC")
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=10)
             label.show()
 
             label = gtk.Label("prop dT:")
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
             label = gtk.Label("0.0")
             self.ssr_prop_readback_label.append(label)
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=30)
             label.show()
 
 
             label = gtk.Label("%/degC")
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.set_alignment(xalign=0.0, yalign=0.5)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=50)
             label.show()
 
 
@@ -440,15 +450,15 @@ class c200_controls:
 
             label = gtk.Label("0.0")
             self.ssr_rate_readback_label.append(label)
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=30)
             label.show()
 
 
             label = gtk.Label("degC/min")
-            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=False, padding=0)
             label.show()
 
-            ssr_input_ctrlbox.pack_start(ssr_pid_rbbox, expand=True, fill=True, padding=0)
+            ssr_input_ctrlbox.pack_start(ssr_pid_rbbox, expand=True, fill=False, padding=0)
             ssr_pid_rbbox.show()
 
 
