@@ -8,6 +8,8 @@ import matplotlib.dates as mdates
 
 from multiprocessing import Process, Pipe, Array
 
+slack_url = ""
+
 
 avg_time = 30.0# 1 minute moving average
 pid_cycle_time = 0.001 # ms pid cycle
@@ -55,7 +57,7 @@ def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_r
                 # Hit emergency limit
                 all_off = True
                 # Push to slack
-                os.system("curl -X POST -H \'Content-type: application/json\' --data \'{\"channel\": \"#c200\", \"text\":\"C200 shutting down!  Temperature saftey threshold met\"}\' https://hooks.slack.com/services/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")
+                os.system("curl -X POST -H \'Content-type: application/json\' --data \'{\"channel\": \"#c200\", \"text\":\"C200 shutting down!  Temperature saftey threshold met\"}\' %s" slack_url)
 
 
         for ssr in range(len(ssr_state)):
