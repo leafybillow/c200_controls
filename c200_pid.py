@@ -52,12 +52,22 @@ def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_r
 
     all_off = False
     while 1:
+
+        if all_off:
+            # Someone manually turned us back on
+            for off_state in ssr_off:
+                if not off_state:
+                    all_off = False
+
         for tcval in tc_data:
             if tcval > hard_temp_limit and not all_off:
                 # Hit emergency limit
                 all_off = True
                 # Push to slack
-                os.system("curl -X POST -H \'Content-type: application/json\' --data \'{\"channel\": \"#c200\", \"text\":\"C200 shutting down!  Temperature saftey threshold met\"}\' %s" slack_url)
+                if not debug:
+                    os.system("curl -X POST -H \'Content-type: application/json\' --data \'{\"channel\": \"#c200\", \"text\":\"C200 shutting down!  Temperature saftey threshold met\"}\' %s"%  slack_url)
+                else:
+                    print "Would push emergency off notification to slack"
 
 
         for ssr in range(len(ssr_state)):

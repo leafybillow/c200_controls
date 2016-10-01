@@ -13,11 +13,13 @@ class c200_controls:
     ssr_T_setp = None
     ssr_T_ramp_state = None
     ssr_T_ramp = None
+    ssr_T_prop = None
     ssr_tc_setp = None
     ssr_state = None
     ssr_avg_power = None
     tc_data = None
     tc_rate = None
+    ssr_off = None
 
     pid_process = None
     ssr_process = None
@@ -34,14 +36,24 @@ class c200_controls:
 
     ssr_setpoint_box = []
     ssr_readback_labels = []
+
     ssr_tc_setpoint_box = []
+    ssr_prop_setpoint_box = []
     ssr_rate_setpoint_box = []
+
+    ssr_tc_assigned_label= []
+    ssr_tc_readback_label= []
+    ssr_prop_readback_label= []
+    ssr_rate_readback_label= []
+
 
     ssr_tc_select_menu = []
 
     ssr_tc_rate_check = []
 
     ssr_man_pid_radio  = []
+
+    off_buttons = []
 
     def hello(self, widget, data=None):
         print "Hello"
@@ -57,7 +69,7 @@ class c200_controls:
             tc.set_text( "%+3.1f"% (self.tc_rate_hour[idx]*3600.0) )
 
         for idx, ssr in enumerate(self.ssr_power_labels):
-            max_p_val = 100.0
+            max_p_val = 400.0
             try:
                 max_p_val = float(self.ssr_max_power_box[idx].get_text())
             except:
@@ -72,7 +84,28 @@ class c200_controls:
                 ssr.set_text( "OFF")
 
         for idx, ssr in enumerate(self.ssr_readback_labels):
-            ssr.set_text( "%2.0f%%"% self.ssr_setp[idx]) 
+            ssr.set_text( "%2.0f%%"% self.ssr_rb[idx]) 
+
+        for idx, off_button in enumerate(self.off_buttons):
+            if self.ssr_off[idx]:
+                off_button.set_active(False)
+                off_button.set_label("OFF")
+            else:
+                off_button.set_active(True)
+                off_button.set_label("ON")
+
+        # PID controls readback
+        for idx, ssr in enumerate(self.ssr_tc_assigned_label):
+            ssr.set_text( "TC %2d" % (self.ssr_tc_setp[idx]+1)) 
+
+        for idx, ssr in enumerate(self.ssr_tc_readback_label):
+            ssr.set_text( "%4.1f" % self.ssr_T_setp[idx]) 
+
+        for idx, ssr in enumerate(self.ssr_prop_readback_label):
+            ssr.set_text( "%4.1f" % (self.ssr_T_prop[idx]*100.0)) 
+
+        for idx, ssr in enumerate(self.ssr_rate_readback_label):
+            ssr.set_text( "%4.1f" % (self.ssr_T_ramp[idx]*60.0)) 
 
         return True
         
@@ -112,11 +145,31 @@ class c200_controls:
             setpoint = -100.0
         self.ssr_T_ramp[ssr] = setpoint/60.0
 
+    def set_prop_setpoint(self, data, ssr):
+        setpoint = 0.0
+        try:
+            setpoint = float(data.get_text())
+        except:
+            setpoint = -0.0
+        self.ssr_T_prop[ssr] = setpoint/100.0
+
+
     def set_rate_limit(self, wid, ssr):
         if wid.get_active():
             self.ssr_T_ramp_state[ssr] = True
         else:
             self.ssr_T_ramp_state[ssr] = False
+
+
+    def turn_off_ssr(self, wid, ssr):
+        if wid.get_active():
+            self.ssr_off[ssr] = False
+            wid.set_label("ON")
+            print "Manually turning on ssr ", ssr
+        else:
+            self.ssr_off[ssr] = True
+            wid.set_label("OFF")
+            print "Manually turning off ssr ", ssr
 
 
     def delete_event(self, widget, event, data=None):
@@ -144,7 +197,7 @@ class c200_controls:
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("destroy", self.destroy)
 
-        self.window.set_border_width(100)
+        self.window.set_border_width(10)
 
         main_box  = gtk.HBox(homogeneous=False, spacing=2)
 
@@ -203,6 +256,8 @@ class c200_controls:
         ssr_box  = gtk.VBox(homogeneous=False, spacing=0)
 
         for i in range(self.n_ssr):
+            ssr_single_ssr_box = gtk.HBox(homogeneous=False, spacing=0)
+
             ssr_chanbox = gtk.VBox(homogeneous=False, spacing=0)
 
             label = gtk.Label("SSR %d" % i)
@@ -293,6 +348,11 @@ class c200_controls:
             ssr_pid_ctrlbox.pack_start(combobox, expand=True, fill=True, padding=0)
             combobox.show()
 
+            label = gtk.Label("Set Temp:")
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+
             entry = gtk.Entry(max=0)
             ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=True, padding=0)
             self.ssr_tc_setpoint_box.append(entry)
@@ -302,6 +362,21 @@ class c200_controls:
             label = gtk.Label("degC")
             ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
             label.show()
+
+            label = gtk.Label("prop dT:")
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            entry = gtk.Entry(max=0)
+            ssr_pid_ctrlbox.pack_start(entry, expand=True, fill=True, padding=0)
+            self.ssr_tc_setpoint_box.append(entry)
+            entry.connect("activate", self.set_prop_setpoint, i)
+            entry.show()
+
+            label = gtk.Label("%/degC")
+            ssr_pid_ctrlbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
 
             check = gtk.CheckButton(label="Rate Limit")
             ssr_pid_ctrlbox.pack_start(check, expand=True, fill=True, padding=0)
@@ -325,6 +400,61 @@ class c200_controls:
             ssr_input_ctrlbox.pack_start(ssr_pid_ctrlbox, expand=True, fill=True, padding=0)
             ssr_pid_ctrlbox.show()
 
+            ############## Third line - PID readback
+            ssr_pid_rbbox = gtk.HBox(homogeneous=False, spacing=0)
+
+            label = gtk.Label("TC -1")
+            self.ssr_tc_assigned_label.append(label)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            label = gtk.Label("Set Temp:")
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            label = gtk.Label("0.0")
+            self.ssr_tc_readback_label.append(label)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            label = gtk.Label("degC")
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            label = gtk.Label("prop dT:")
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            label = gtk.Label("0.0")
+            self.ssr_prop_readback_label.append(label)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+
+            label = gtk.Label("%/degC")
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+
+            # empty space here
+
+            label = gtk.Label("0.0")
+            self.ssr_rate_readback_label.append(label)
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+
+            label = gtk.Label("degC/min")
+            ssr_pid_rbbox.pack_start(label, expand=True, fill=True, padding=0)
+            label.show()
+
+            ssr_input_ctrlbox.pack_start(ssr_pid_rbbox, expand=True, fill=True, padding=0)
+            ssr_pid_rbbox.show()
+
+
+            ################################
+
+
 
             ssr_ctrlbox.pack_start(ssr_input_ctrlbox,  expand=True, fill=True, padding=0)
             ssr_input_ctrlbox.show()
@@ -332,8 +462,20 @@ class c200_controls:
             ssr_chanbox.pack_start(ssr_ctrlbox, expand=True, fill=True, padding=0)
             ssr_ctrlbox.show()
 
-            ssr_box.pack_start(ssr_chanbox, expand=True, fill=True, padding=0)
+
+            ssr_single_ssr_box.pack_start(ssr_chanbox, expand=True, fill=True, padding=0)
             ssr_chanbox.show()
+
+            button = gtk.ToggleButton("ON")
+            button.set_active(True)
+            button.connect("toggled", self.turn_off_ssr, i)
+            self.off_buttons.append(button)
+
+            ssr_single_ssr_box.pack_start( button, expand=True, fill=True, padding=5)
+            button.show()
+
+            ssr_box.pack_start(ssr_single_ssr_box, expand=True, fill=True, padding=0)
+            ssr_single_ssr_box.show()
 
         main_box.pack_start(ssr_box, expand=True, fill=True, padding=0)
         ssr_box.show()

@@ -72,6 +72,8 @@ if __name__ == '__main__':
     controls.n_tc  = n_tc
     controls.n_ssr = n_ssr
 
+    controls.ssr_off = ssr_off
+
     controls.tc_process       =  p_tc
     controls.tc_graph_process =  p_tc_graph
     controls.ssr_process      = p_ssr
@@ -82,6 +84,9 @@ if __name__ == '__main__':
 
     controls.pidctrl_state = pidctrl_state
     controls.ssr_T_setp = ssr_T_setp
+
+    controls.ssr_T_prop = ssr_prop_setp  
+
     controls.ssr_T_ramp_state = ssr_T_ramp_state
     controls.ssr_T_ramp = ssr_T_ramp
     controls.ssr_tc_setp = ssr_tc_setp
