@@ -22,7 +22,7 @@ import c200_write
 if __name__ == '__main__':
     freeze_support()
 
-    n_ssr = 2
+    n_ssr = 4
     n_tc = 16
 
     ssr_off  = Array('i', [0  for i in range(n_ssr)] )

@@ -22,9 +22,13 @@ hard_rate_limit = 5.0/60.0 # 5 deg/min
 def set_ssr( port, chan, val ):
     if not debug:
         if chan == 0:
-            port.dtr = val
+            port[0].dtr = val
         if chan == 1:
-            port.rts = val
+            port[0].rts = val
+        if chan == 2:
+            port[1].dtr = val
+        if chan == 3:
+            port[1].rts = val
 
 
 def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_rate_min, tc_rate_hour, ssr_off, ssr_state, ssr_rb, pidctrl_state, ssr_avg_power):
@@ -33,22 +37,25 @@ def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_r
 
     power_sum = [[] for i in range(len(ssr_state))]
 
-    ssr_port = None
+    ssr_port = []
     if not debug:
         ports = comports()
 
         for port in ports:
             print port
         port = ports[1]
-        print "Opening ", port, " for SSR control"
+        print "Opening ", ports[1], " for SSR control"
+        print "Opening ", ports[2], " for SSR control"
 
-        ssr_port = serial.Serial(port[0], 9600, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1)
+        ssr_port.append(serial.Serial(ports[1], 9600, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1))
+        ssr_port.append(serial.Serial(ports[2], 9600, timeout= 1, parity=serial.PARITY_NONE, xonxoff=0, rtscts=False, dsrdtr=False, bytesize=8, stopbits=1))
 
-        ssr_port.close()
-        ssr_port.open()
+        for p in ssr_port:
+            p.close()
+            p.open()
 
-        ssr_port.dtr = False
-        ssr_port.rts = False
+            p.dtr = False
+            p.rts = False
 
     all_off = False
     while 1:
