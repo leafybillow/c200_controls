@@ -67,8 +67,9 @@ def pid_loop(T_setp, prop_setp, assigned_tc, T_ramp_state, T_ramp, tc_data, tc_r
                     all_off = False
 
         for tcval in tc_data:
-            if tcval > hard_temp_limit and not all_off:
+            if tcval > hard_temp_limit and tcval < 10000.0 and not all_off:
                 # Hit emergency limit
+                print "TC val of ", tcval, " found"
                 all_off = True
                 # Push to slack
                 if not debug:
